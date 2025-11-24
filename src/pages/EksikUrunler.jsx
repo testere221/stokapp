@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react'
-import { getEksikUrunler, saveEksikUrunler } from '../utils/storage'
+import { 
+  subscribeEksikUrunler, 
+  addEksikUrun, 
+  updateEksikUrun, 
+  deleteEksikUrun 
+} from '../utils/supabase-storage'
 import './Urunler.css'
 
 function EksikUrunler() {
   const [urunler, setUrunler] = useState([])
   const [showForm, setShowForm] = useState(false)
-  const [editingIndex, setEditingIndex] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     urunAdi: '',
     kategori: '',
@@ -16,12 +22,13 @@ function EksikUrunler() {
   })
 
   useEffect(() => {
-    loadUrunler()
-  }, [])
+    // Gerçek zamanlı dinleme
+    const unsubscribe = subscribeEksikUrunler((urunler) => {
+      setUrunler(urunler)
+    })
 
-  const loadUrunler = () => {
-    setUrunler(getEksikUrunler())
-  }
+    return () => unsubscribe()
+  }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -52,38 +59,53 @@ function EksikUrunler() {
     }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const yeniUrun = {
-      ...formData,
-      miktar: parseFloat(formData.miktar) || 0,
-      tarih: new Date().toLocaleDateString('tr-TR')
-    }
-
-    const yeniListe = [...urunler]
+    setLoading(true)
     
-    if (editingIndex !== null) {
-      yeniListe[editingIndex] = yeniUrun
-    } else {
-      yeniListe.push(yeniUrun)
-    }
+    try {
+      const yeniUrun = {
+        ...formData,
+        miktar: parseFloat(formData.miktar) || 0,
+        tarih: new Date().toLocaleDateString('tr-TR')
+      }
 
-    saveEksikUrunler(yeniListe)
-    setUrunler(yeniListe)
-    resetForm()
+      if (editingId) {
+        await updateEksikUrun(editingId, yeniUrun)
+      } else {
+        await addEksikUrun(yeniUrun)
+      }
+      
+      resetForm()
+    } catch (error) {
+      console.error('Hata:', error)
+      alert('Bir hata oluştu. Lütfen tekrar deneyin.')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleEdit = (index) => {
-    setEditingIndex(index)
-    setFormData(urunler[index])
+  const handleEdit = (urun) => {
+    setEditingId(urun.id)
+    setFormData({
+      urunAdi: urun.urunAdi || '',
+      kategori: urun.kategori || '',
+      miktar: urun.miktar || '',
+      barkod: urun.barkod || '',
+      resim: urun.resim || '',
+      aciklama: urun.aciklama || ''
+    })
     setShowForm(true)
   }
 
-  const handleDelete = (index) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
-      const yeniListe = urunler.filter((_, i) => i !== index)
-      saveEksikUrunler(yeniListe)
-      setUrunler(yeniListe)
+      try {
+        await deleteEksikUrun(id)
+      } catch (error) {
+        console.error('Hata:', error)
+        alert('Silme işlemi başarısız oldu.')
+      }
     }
   }
 
@@ -97,7 +119,7 @@ function EksikUrunler() {
       aciklama: ''
     })
     setShowForm(false)
-    setEditingIndex(null)
+    setEditingId(null)
   }
 
   return (
@@ -115,7 +137,7 @@ function EksikUrunler() {
       {showForm && (
         <div className="form-container">
           <form onSubmit={handleSubmit} className="urun-form">
-            <h2>{editingIndex !== null ? '✏️ Ürün Düzenle' : '➕ Yeni Ürün Ekle'}</h2>
+            <h2>{editingId ? '✏️ Ürün Düzenle' : '➕ Yeni Ürün Ekle'}</h2>
             
             <div className="form-group">
               <label>Ürün Adı *</label>
@@ -198,8 +220,8 @@ function EksikUrunler() {
             </div>
 
             <div className="form-actions">
-              <button type="submit" className="btn btn-success">
-                {editingIndex !== null ? '💾 Kaydet' : '➕ Ekle'}
+              <button type="submit" className="btn btn-success" disabled={loading}>
+                {loading ? '⏳ Kaydediliyor...' : (editingId ? '💾 Kaydet' : '➕ Ekle')}
               </button>
               <button type="button" onClick={resetForm} className="btn btn-secondary">
                 İptal
@@ -229,8 +251,8 @@ function EksikUrunler() {
                 </tr>
               </thead>
               <tbody>
-                {urunler.map((urun, index) => (
-                  <tr key={index}>
+                {urunler.map((urun) => (
+                  <tr key={urun.id}>
                     <td>
                       {urun.resim ? (
                         <img src={urun.resim} alt={urun.urunAdi} className="table-image" />
@@ -246,14 +268,14 @@ function EksikUrunler() {
                     <td>
                       <div className="action-buttons">
                         <button
-                          onClick={() => handleEdit(index)}
+                          onClick={() => handleEdit(urun)}
                           className="btn-icon btn-edit"
                           title="Düzenle"
                         >
                           ✏️
                         </button>
                         <button
-                          onClick={() => handleDelete(index)}
+                          onClick={() => handleDelete(urun.id)}
                           className="btn-icon btn-delete"
                           title="Sil"
                         >
@@ -278,4 +300,3 @@ function EksikUrunler() {
 }
 
 export default EksikUrunler
-

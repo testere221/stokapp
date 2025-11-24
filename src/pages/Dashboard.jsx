@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getEksikUrunler, getFazlaUrunler } from '../utils/storage'
+import { subscribeEksikUrunler, subscribeFazlaUrunler } from '../utils/supabase-storage'
 import './Dashboard.css'
 
 function Dashboard() {
@@ -13,23 +13,19 @@ function Dashboard() {
   const [showUrunDetayModal, setShowUrunDetayModal] = useState(false)
 
   useEffect(() => {
-    setEksikUrunler(getEksikUrunler())
-    setFazlaUrunler(getFazlaUrunler())
-    
-    // LocalStorage değişikliklerini dinle
-    const handleStorageChange = () => {
-      setEksikUrunler(getEksikUrunler())
-      setFazlaUrunler(getFazlaUrunler())
-    }
-    
-    window.addEventListener('storage', handleStorageChange)
-    
-    // Her 500ms'de bir kontrol et (aynı sekmede değişiklikler için)
-    const interval = setInterval(handleStorageChange, 500)
-    
+    // Gerçek zamanlı dinleme - Eksik Ürünler
+    const unsubscribeEksik = subscribeEksikUrunler((urunler) => {
+      setEksikUrunler(urunler)
+    })
+
+    // Gerçek zamanlı dinleme - Fazla Ürünler
+    const unsubscribeFazla = subscribeFazlaUrunler((urunler) => {
+      setFazlaUrunler(urunler)
+    })
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      clearInterval(interval)
+      unsubscribeEksik()
+      unsubscribeFazla()
     }
   }, [])
 
