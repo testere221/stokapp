@@ -5,6 +5,7 @@ import {
   updateFazlaUrun, 
   deleteFazlaUrun 
 } from '../utils/supabase-storage'
+import BarkodOlusturucu from '../components/BarkodOlusturucu'
 import './Urunler.css'
 
 function FazlaUrunler() {
@@ -186,6 +187,14 @@ function FazlaUrunler() {
                   onChange={handleInputChange}
                   placeholder="Örn: 1234567890123"
                 />
+                {formData.barkod && (
+                  <div className="barkod-preview-container">
+                    <BarkodOlusturucu 
+                      barkod={formData.barkod} 
+                      urunAdi={formData.urunAdi || ''}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

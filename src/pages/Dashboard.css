@@ -390,6 +390,12 @@
   align-items: flex-start;
 }
 
+.detail-row.full-width .detail-value {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 .detail-label {
   font-weight: 700;
   color: var(--text-secondary);

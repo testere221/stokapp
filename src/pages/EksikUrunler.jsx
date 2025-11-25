@@ -5,6 +5,7 @@ import {
   updateEksikUrun, 
   deleteEksikUrun 
 } from '../utils/supabase-storage'
+import BarkodOlusturucu from '../components/BarkodOlusturucu'
 import './Urunler.css'
 
 function EksikUrunler() {
@@ -186,6 +187,14 @@ function EksikUrunler() {
                   onChange={handleInputChange}
                   placeholder="Örn: 1234567890123"
                 />
+                {formData.barkod && (
+                  <div className="barkod-preview-container">
+                    <BarkodOlusturucu 
+                      barkod={formData.barkod} 
+                      urunAdi={formData.urunAdi || ''}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

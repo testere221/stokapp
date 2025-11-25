@@ -373,6 +373,14 @@
   border-radius: var(--radius-sm);
 }
 
+.barkod-preview-container {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
 @media (max-width: 1024px) {
   .form-row {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
