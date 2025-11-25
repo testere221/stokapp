@@ -12,6 +12,8 @@ function Dashboard() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [detayUrun, setDetayUrun] = useState(null)
   const [showUrunDetayModal, setShowUrunDetayModal] = useState(false)
+  const [showImageModal, setShowImageModal] = useState(false)
+  const [modalImage, setModalImage] = useState(null)
 
   useEffect(() => {
     // Gerçek zamanlı dinleme - Eksik Ürünler
@@ -419,7 +421,7 @@ function Dashboard() {
           setShowUrunDetayModal(false)
           setDetayUrun(null)
         }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content product-detail-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>📦 Ürün Detayları</h2>
               <button 
@@ -433,70 +435,83 @@ function Dashboard() {
               </button>
             </div>
             <div className="modal-body">
-              <div className="detail-section">
-                {detayUrun.resim && (
-                  <div className="detail-image-container">
-                    <img src={detayUrun.resim} alt={detayUrun.urunAdi} className="detail-image" />
+              <div className="product-detail-new">
+                {/* Ürün Adı ve Resmi */}
+                <div className="product-header-new">
+                  <div className="product-name-section">
+                    <span className="product-label">Ürün:</span>
+                    <span className="product-name-value">{detayUrun.urunAdi || '-'}</span>
                   </div>
-                )}
-                <div className="detail-info">
-                  <div className="detail-row">
-                    <span className="detail-label">Ürün Adı:</span>
-                    <span className="detail-value detail-value-with-barcode">
-                      {detayUrun.urunAdi || '-'}
-                      {detayUrun.barkod && (
-                        <BarkodOlusturucu 
-                          barkod={detayUrun.barkod} 
-                          compact={true}
-                          showDownloadButton={false}
-                        />
-                      )}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Kategori:</span>
-                    <span className="detail-value">{detayUrun.kategori || '-'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Barkod Numarası:</span>
-                    <span className="detail-value">{detayUrun.barkod || '-'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Tip:</span>
-                    <span className={`detail-value ${detayUrun.tip === 'eksik' ? 'eksik-badge' : 'fazla-badge'}`}>
-                      {detayUrun.tip === 'eksik' ? '⚠️ Eksik Ürün' : '📦 Fazla Ürün'}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">{detayUrun.tip === 'eksik' ? 'Eksik Miktar:' : 'Fazla Miktar:'}</span>
-                    <span className={`detail-value ${detayUrun.tip === 'eksik' ? 'eksik-miktar' : 'fazla-miktar'}`}>
-                      {detayUrun.miktar || 0}
-                    </span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Tarih:</span>
-                    <span className="detail-value">{detayUrun.tarih || '-'}</span>
-                  </div>
-                  {detayUrun.aciklama && (
-                    <div className="detail-row full-width">
-                      <span className="detail-label">Açıklama:</span>
-                      <span className="detail-value">{detayUrun.aciklama}</span>
+                  {detayUrun.resim && (
+                    <div 
+                      className="product-image-small"
+                      onClick={() => {
+                        setModalImage(detayUrun.resim)
+                        setShowImageModal(true)
+                      }}
+                      title="Tam boyut görmek için tıklayın"
+                    >
+                      <img src={detayUrun.resim} alt={detayUrun.urunAdi} />
                     </div>
                   )}
                 </div>
+
+                {/* Barkod Kartı */}
+                {detayUrun.barkod && (
+                  <div className="barkod-card">
+                    <div className="barkod-card-label">Barkod:</div>
+                    <div className="barkod-card-content">
+                      <BarkodOlusturucu 
+                        barkod={detayUrun.barkod} 
+                        urunAdi=""
+                        compact={false}
+                        showDownloadButton={false}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Ürün Durumu */}
+                <div className="product-status-card">
+                  <div className="product-status-label">Ürün Durumu:</div>
+                  <div className="product-status-content">
+                    <span className={`status-badge ${detayUrun.tip === 'eksik' ? 'eksik-badge' : 'fazla-badge'}`}>
+                      {detayUrun.tip === 'eksik' ? '⚠️ Eksik' : '📦 Fazla'}
+                    </span>
+                    <span className={`status-amount ${detayUrun.tip === 'eksik' ? 'eksik-miktar' : 'fazla-miktar'}`}>
+                      {detayUrun.miktar || 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Tarih */}
+                <div className="product-date-card">
+                  <div className="product-date-label">Tarih:</div>
+                  <div className="product-date-value">{detayUrun.tarih || '-'}</div>
+                </div>
               </div>
             </div>
-            <div className="modal-footer">
-              <button 
-                className="btn btn-secondary"
-                onClick={() => {
-                  setShowUrunDetayModal(false)
-                  setDetayUrun(null)
-                }}
-              >
-                Kapat
-              </button>
-            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ürün Resmi Tam Boyut Modal */}
+      {showImageModal && modalImage && (
+        <div className="modal-overlay" onClick={() => {
+          setShowImageModal(false)
+          setModalImage(null)
+        }}>
+          <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="modal-close"
+              onClick={() => {
+                setShowImageModal(false)
+                setModalImage(null)
+              }}
+            >
+              ✕
+            </button>
+            <img src={modalImage} alt="Ürün resmi" className="full-size-image" />
           </div>
         </div>
       )}

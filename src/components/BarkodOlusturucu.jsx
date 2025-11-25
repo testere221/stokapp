@@ -112,7 +112,7 @@ function BarkodOlusturucu({ barkod, urunAdi, compact = false, showDownloadButton
 
   return (
     <div className="barkod-container">
-      {urunAdi && (
+      {urunAdi && urunAdi.trim() !== '' && (
         <div className="barkod-label">
           <strong>{urunAdi}</strong>
         </div>
