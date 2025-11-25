@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react'
-import { subscribeEksikUrunler, subscribeFazlaUrunler } from '../utils/supabase-storage'
+import { 
+  subscribeEksikUrunler, 
+  subscribeFazlaUrunler,
+  updateEksikUrun,
+  updateFazlaUrun,
+  deleteEksikUrun,
+  deleteFazlaUrun
+} from '../utils/supabase-storage'
 import BarkodOlusturucu from '../components/BarkodOlusturucu'
 import './Dashboard.css'
 
@@ -14,6 +21,17 @@ function Dashboard() {
   const [showUrunDetayModal, setShowUrunDetayModal] = useState(false)
   const [showImageModal, setShowImageModal] = useState(false)
   const [modalImage, setModalImage] = useState(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingUrun, setEditingUrun] = useState(null)
+  const [editFormData, setEditFormData] = useState({
+    urunAdi: '',
+    kategori: '',
+    miktar: '',
+    barkod: '',
+    resim: '',
+    aciklama: ''
+  })
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     // Gerçek zamanlı dinleme - Eksik Ürünler
@@ -100,6 +118,98 @@ function Dashboard() {
     setShowUrunDetayModal(true)
   }
 
+  const handleEdit = (urun, tip) => {
+    setEditingUrun({ ...urun, tip })
+    setEditFormData({
+      urunAdi: urun.urunAdi || '',
+      kategori: urun.kategori || '',
+      miktar: urun.miktar || '',
+      barkod: urun.barkod || '',
+      resim: urun.resim || '',
+      aciklama: urun.aciklama || ''
+    })
+    setShowEditModal(true)
+  }
+
+  const handleDelete = async (urun, tip) => {
+    if (window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
+      try {
+        if (tip === 'eksik') {
+          await deleteEksikUrun(urun.id)
+        } else {
+          await deleteFazlaUrun(urun.id)
+        }
+      } catch (error) {
+        console.error('Hata:', error)
+        alert('Silme işlemi başarısız oldu.')
+      }
+    }
+  }
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleEditImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setEditFormData(prev => ({
+          ...prev,
+          resim: reader.result
+        }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeEditImage = () => {
+    setEditFormData(prev => ({
+      ...prev,
+      resim: ''
+    }))
+  }
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    
+    try {
+      const guncellenmisUrun = {
+        ...editFormData,
+        miktar: parseFloat(editFormData.miktar) || 0,
+        tarih: new Date().toLocaleDateString('tr-TR')
+      }
+
+      if (editingUrun.tip === 'eksik') {
+        await updateEksikUrun(editingUrun.id, guncellenmisUrun)
+      } else {
+        await updateFazlaUrun(editingUrun.id, guncellenmisUrun)
+      }
+      
+      setShowEditModal(false)
+      setEditingUrun(null)
+      setEditFormData({
+        urunAdi: '',
+        kategori: '',
+        miktar: '',
+        barkod: '',
+        resim: '',
+        aciklama: ''
+      })
+    } catch (error) {
+      console.error('Hata:', error)
+      alert('Güncelleme işlemi başarısız oldu.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="dashboard">
       <h1 className="dashboard-title">📊 Stok İstatistikleri</h1>
@@ -164,6 +274,7 @@ function Dashboard() {
                   <th>Kategori</th>
                   <th>Eksik Miktar</th>
                   <th>Barkod</th>
+                  <th>İşlemler</th>
                 </tr>
               </thead>
               <tbody>
@@ -203,26 +314,50 @@ function Dashboard() {
                   <th>Kategori</th>
                   <th>Fazla Miktar</th>
                   <th>Barkod</th>
+                  <th>İşlemler</th>
                 </tr>
               </thead>
               <tbody>
                 {enCokFazlaUrunler.length > 0 ? (
                   enCokFazlaUrunler.map((urun, index) => (
-                    <tr 
-                      key={index}
-                      className="clickable-row"
-                      onClick={() => handleUrunDetayGoster(urun, 'fazla')}
-                      title="Detayları görmek için tıklayın"
-                    >
-                      <td>{urun.urunAdi || 'İsimsiz Ürün'}</td>
+                    <tr key={index}>
+                      <td 
+                        className="clickable-cell"
+                        onClick={() => handleUrunDetayGoster(urun, 'fazla')}
+                        title="Detayları görmek için tıklayın"
+                      >
+                        {urun.urunAdi || 'İsimsiz Ürün'}
+                      </td>
                       <td>{urun.kategori || '-'}</td>
                       <td className="fazla-miktar">{urun.miktar || 0}</td>
                       <td>{urun.barkod || '-'}</td>
+                      <td className="action-cell">
+                        <button
+                          className="btn-icon btn-edit"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEdit(urun, 'fazla')
+                          }}
+                          title="Düzenle"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="btn-icon btn-delete"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(urun, 'fazla')
+                          }}
+                          title="Sil"
+                        >
+                          🗑️
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="empty-message">
+                    <td colSpan="5" className="empty-message">
                       Henüz fazla ürün kaydı yok
                     </td>
                   </tr>
@@ -512,6 +647,141 @@ function Dashboard() {
               ✕
             </button>
             <img src={modalImage} alt="Ürün resmi" className="full-size-image" />
+          </div>
+        </div>
+      )}
+
+      {/* Düzenleme Modal */}
+      {showEditModal && editingUrun && (
+        <div className="modal-overlay" onClick={() => {
+          setShowEditModal(false)
+          setEditingUrun(null)
+        }}>
+          <div className="modal-content edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>✏️ Ürün Düzenle</h2>
+              <button 
+                className="modal-close"
+                onClick={() => {
+                  setShowEditModal(false)
+                  setEditingUrun(null)
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleEditSubmit} className="edit-form">
+                <div className="form-group">
+                  <label>Ürün Adı *</label>
+                  <input
+                    type="text"
+                    name="urunAdi"
+                    value={editFormData.urunAdi}
+                    onChange={handleEditInputChange}
+                    required
+                    placeholder="Örn: Laptop"
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Kategori</label>
+                    <input
+                      type="text"
+                      name="kategori"
+                      value={editFormData.kategori}
+                      onChange={handleEditInputChange}
+                      placeholder="Örn: Elektronik"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>{editingUrun.tip === 'eksik' ? 'Eksik Miktar *' : 'Fazla Miktar *'}</label>
+                    <input
+                      type="number"
+                      name="miktar"
+                      value={editFormData.miktar}
+                      onChange={handleEditInputChange}
+                      required
+                      min="0"
+                      step="0.01"
+                      placeholder="0"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Barkod Numarası</label>
+                    <input
+                      type="text"
+                      name="barkod"
+                      value={editFormData.barkod}
+                      onChange={handleEditInputChange}
+                      placeholder="Örn: 1234567890123"
+                    />
+                    {editFormData.barkod && (
+                      <div className="barkod-preview-container">
+                        <BarkodOlusturucu 
+                          barkod={editFormData.barkod} 
+                          urunAdi={editFormData.urunAdi || ''}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Ürün Resmi</label>
+                  {editFormData.resim ? (
+                    <div className="image-preview-container">
+                      <img src={editFormData.resim} alt="Ürün resmi" className="image-preview" />
+                      <button type="button" onClick={removeEditImage} className="btn btn-secondary btn-small">
+                        🗑️ Resmi Kaldır
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditImageChange}
+                      className="file-input"
+                    />
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Açıklama</label>
+                  <textarea
+                    name="aciklama"
+                    value={editFormData.aciklama}
+                    onChange={handleEditInputChange}
+                    rows="4"
+                    placeholder="Ürün hakkında notlar..."
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <button 
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setShowEditModal(false)
+                      setEditingUrun(null)
+                    }}
+                    disabled={loading}
+                  >
+                    İptal
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    disabled={loading}
+                  >
+                    {loading ? '⏳ Kaydediliyor...' : '💾 Kaydet'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
