@@ -23,6 +23,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
+  flex-wrap: wrap;
 }
 
 .nav-logo {
@@ -116,6 +117,18 @@
   
   .nav-logo {
     font-size: 1.5rem;
+  }
+
+  .add-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .add-buttons .btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
   }
   
   .nav-links {
