@@ -261,7 +261,16 @@ function Dashboard() {
                   <div className="detail-info">
                     <div className="detail-row">
                       <span className="detail-label">Ürün Adı:</span>
-                      <span className="detail-value">{aramaSonuclari[0].urunAdi || '-'}</span>
+                      <span className="detail-value detail-value-with-barcode">
+                        {aramaSonuclari[0].urunAdi || '-'}
+                        {aramaSonuclari[0].barkod && (
+                          <BarkodOlusturucu 
+                            barkod={aramaSonuclari[0].barkod} 
+                            compact={true}
+                            showDownloadButton={false}
+                          />
+                        )}
+                      </span>
                     </div>
                     <div className="detail-row">
                       <span className="detail-label">Kategori:</span>
@@ -271,17 +280,6 @@ function Dashboard() {
                       <span className="detail-label">Barkod Numarası:</span>
                       <span className="detail-value">{aramaSonuclari[0].barkod || '-'}</span>
                     </div>
-                    {aramaSonuclari[0].barkod && (
-                      <div className="detail-row full-width">
-                        <span className="detail-label">Barkod:</span>
-                        <div className="detail-value">
-                          <BarkodOlusturucu 
-                            barkod={aramaSonuclari[0].barkod} 
-                            urunAdi={aramaSonuclari[0].urunAdi || ''}
-                          />
-                        </div>
-                      </div>
-                    )}
                     <div className="detail-row">
                       <span className="detail-label">Tip:</span>
                       <span className={`detail-value ${aramaSonuclari[0].tip === 'eksik' ? 'eksik-badge' : 'fazla-badge'}`}>
@@ -353,7 +351,16 @@ function Dashboard() {
                         <div className="detail-info">
                           <div className="detail-row">
                             <span className="detail-label">Ürün Adı:</span>
-                            <span className="detail-value">{seciliUrun.urunAdi || '-'}</span>
+                            <span className="detail-value detail-value-with-barcode">
+                              {seciliUrun.urunAdi || '-'}
+                              {seciliUrun.barkod && (
+                                <BarkodOlusturucu 
+                                  barkod={seciliUrun.barkod} 
+                                  compact={true}
+                                  showDownloadButton={false}
+                                />
+                              )}
+                            </span>
                           </div>
                           <div className="detail-row">
                             <span className="detail-label">Kategori:</span>
@@ -363,17 +370,6 @@ function Dashboard() {
                             <span className="detail-label">Barkod Numarası:</span>
                             <span className="detail-value">{seciliUrun.barkod || '-'}</span>
                           </div>
-                          {seciliUrun.barkod && (
-                            <div className="detail-row full-width">
-                              <span className="detail-label">Barkod:</span>
-                              <div className="detail-value">
-                                <BarkodOlusturucu 
-                                  barkod={seciliUrun.barkod} 
-                                  urunAdi={seciliUrun.urunAdi || ''}
-                                />
-                              </div>
-                            </div>
-                          )}
                           <div className="detail-row">
                             <span className="detail-label">Tip:</span>
                             <span className={`detail-value ${seciliUrun.tip === 'eksik' ? 'eksik-badge' : 'fazla-badge'}`}>
@@ -446,7 +442,16 @@ function Dashboard() {
                 <div className="detail-info">
                   <div className="detail-row">
                     <span className="detail-label">Ürün Adı:</span>
-                    <span className="detail-value">{detayUrun.urunAdi || '-'}</span>
+                    <span className="detail-value detail-value-with-barcode">
+                      {detayUrun.urunAdi || '-'}
+                      {detayUrun.barkod && (
+                        <BarkodOlusturucu 
+                          barkod={detayUrun.barkod} 
+                          compact={true}
+                          showDownloadButton={false}
+                        />
+                      )}
+                    </span>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Kategori:</span>
@@ -456,17 +461,6 @@ function Dashboard() {
                     <span className="detail-label">Barkod Numarası:</span>
                     <span className="detail-value">{detayUrun.barkod || '-'}</span>
                   </div>
-                  {detayUrun.barkod && (
-                    <div className="detail-row full-width">
-                      <span className="detail-label">Barkod:</span>
-                      <div className="detail-value">
-                        <BarkodOlusturucu 
-                          barkod={detayUrun.barkod} 
-                          urunAdi={detayUrun.urunAdi || ''}
-                        />
-                      </div>
-                    </div>
-                  )}
                   <div className="detail-row">
                     <span className="detail-label">Tip:</span>
                     <span className={`detail-value ${detayUrun.tip === 'eksik' ? 'eksik-badge' : 'fazla-badge'}`}>

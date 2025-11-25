@@ -407,6 +407,14 @@
 .detail-value {
   color: var(--text-primary);
   font-weight: 600;
+}
+
+.detail-value-with-barcode {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
   font-size: 1.05rem;
 }
 
