@@ -44,7 +44,7 @@ function Dashboard() {
     aciklama: ''
   })
   const [addLoading, setAddLoading] = useState(false)
-  const [isSearchExpanded, setIsSearchExpanded] = useState(false)
+  const [showContinuousFlow, setShowContinuousFlow] = useState(false)
 
   useEffect(() => {
     // Gerçek zamanlı dinleme - Eksik Ürünler
@@ -289,69 +289,79 @@ function Dashboard() {
     setShowAddModal(true)
   }
 
+  const playSound = () => {
+    const audio = new Audio('/sound.mp3')
+    
+    // Ses bitince animasyonu durdur
+    audio.addEventListener('ended', () => {
+      setShowContinuousFlow(false)
+    })
+    
+    // Ses çalarken animasyonu başlat
+    audio.play().then(() => {
+      // Konfeti patlaması efekti
+      setShowContinuousFlow(true)
+    }).catch(err => {
+      console.error('Ses çalınamadı:', err)
+    })
+  }
+
   return (
     <div className="dashboard">
       <nav className="navbar">
         <div className="nav-container">
           <h1 className="nav-logo">📦 Stok Kontrol</h1>
-          <div className="add-buttons">
+          <div className="nav-actions">
             <button 
-              className="btn btn-danger"
-              onClick={() => openAddModal('eksik')}
+              className="btn btn-sound"
+              onClick={playSound}
+              title="Ses Çal"
             >
-              ⚠️ Eksik Ürün Ekle
+              🔊
             </button>
-            <button 
-              className="btn btn-success"
-              onClick={() => openAddModal('fazla')}
-            >
-              📦 Fazla Ürün Ekle
-            </button>
+            <div className="add-buttons">
+              <button 
+                className="btn btn-danger"
+                onClick={() => openAddModal('eksik')}
+              >
+                ⚠️ Eksik Ürün Ekle
+              </button>
+              <button 
+                className="btn btn-success"
+                onClick={() => openAddModal('fazla')}
+              >
+                📦 Fazla Ürün Ekle
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
       <main className="main-content">
-        <div 
-          className={`search-container ${isSearchExpanded ? 'expanded' : ''}`}
-          onMouseEnter={() => setIsSearchExpanded(true)}
-          onMouseLeave={() => {
-            if (!arama) {
-              setIsSearchExpanded(false)
-            }
-          }}
-        >
-          <form onSubmit={handleArama} className="search-form">
-            <div className="search-input-wrapper">
+        <div className="search-wrapper">
+          <form onSubmit={handleArama} className="search-form-new">
+            <div className="search-input-container">
+              <span className="search-icon">🔍</span>
               <input
                 type="text"
                 value={arama}
                 onChange={(e) => setArama(e.target.value)}
-                onFocus={() => setIsSearchExpanded(true)}
-                onBlur={() => {
-                  if (!arama) {
-                    setIsSearchExpanded(false)
-                  }
-                }}
-                placeholder="Barkod numarası veya ürün adı ile ara..."
-                className="search-input"
+                placeholder="Barkod veya ürün adı ile ara..."
+                className="search-input-new"
               />
+              {arama && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setArama('')}
+                  title="Temizle"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-            <button 
-              type="button"
-              className="search-icon-btn"
-              onClick={() => {
-                setIsSearchExpanded(true)
-                setTimeout(() => {
-                  document.querySelector('.search-input')?.focus()
-                }, 100)
-              }}
-              title="Ara"
-            >
-              🔍
-            </button>
-            {isSearchExpanded && (
-              <button type="submit" className="btn btn-primary search-btn">
+            {arama && (
+              <button type="submit" className="search-submit-btn">
                 Ara
               </button>
             )}
@@ -416,6 +426,7 @@ function Dashboard() {
                 <table className="stats-table">
                   <thead>
                     <tr>
+                      <th className="table-image-header">Resim</th>
                       <th>Ürün Adı</th>
                       <th>Fazla Miktar</th>
                       <th>Barkod</th>
@@ -433,6 +444,23 @@ function Dashboard() {
                             onClick={() => handleUrunDetayGoster(urun, 'fazla')}
                             title="Detayları görmek için tıklayın"
                           >
+                            <td className="table-image-cell" onClick={(e) => e.stopPropagation()}>
+                              {urun.resim ? (
+                                <img
+                                  src={urun.resim}
+                                  alt={urun.urunAdi || 'Ürün resmi'}
+                                  className="table-product-image"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setModalImage(urun.resim)
+                                    setShowImageModal(true)
+                                  }}
+                                  title="Tam boyut görmek için tıklayın"
+                                />
+                              ) : (
+                                <div className="table-image-placeholder">📷</div>
+                              )}
+                            </td>
                             <td>{urun.urunAdi || 'İsimsiz Ürün'}</td>
                             <td className="fazla-miktar">{urun.miktar || 0}</td>
                             <td>{urun.barkod || '-'}</td>
@@ -462,7 +490,7 @@ function Dashboard() {
                         ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="empty-message">
+                        <td colSpan="6" className="empty-message">
                           Henüz fazla ürün kaydı yok
                         </td>
                       </tr>
@@ -479,6 +507,7 @@ function Dashboard() {
                 <table className="stats-table">
                   <thead>
                     <tr>
+                      <th className="table-image-header">Resim</th>
                       <th>Ürün Adı</th>
                       <th>Eksik Miktar</th>
                       <th>Barkod</th>
@@ -496,6 +525,23 @@ function Dashboard() {
                             onClick={() => handleUrunDetayGoster(urun, 'eksik')}
                             title="Detayları görmek için tıklayın"
                           >
+                            <td className="table-image-cell" onClick={(e) => e.stopPropagation()}>
+                              {urun.resim ? (
+                                <img
+                                  src={urun.resim}
+                                  alt={urun.urunAdi || 'Ürün resmi'}
+                                  className="table-product-image"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setModalImage(urun.resim)
+                                    setShowImageModal(true)
+                                  }}
+                                  title="Tam boyut görmek için tıklayın"
+                                />
+                              ) : (
+                                <div className="table-image-placeholder">📷</div>
+                              )}
+                            </td>
                             <td>{urun.urunAdi || 'İsimsiz Ürün'}</td>
                             <td className="eksik-miktar">{urun.miktar || 0}</td>
                             <td>{urun.barkod || '-'}</td>
@@ -525,7 +571,7 @@ function Dashboard() {
                         ))
                     ) : (
                       <tr>
-                        <td colSpan="5" className="empty-message">
+                        <td colSpan="6" className="empty-message">
                           Henüz eksik ürün kaydı yok
                         </td>
                       </tr>
@@ -1110,6 +1156,66 @@ function Dashboard() {
               </form>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Konfeti Patlaması Efekti */}
+      {showContinuousFlow && (
+        <div className="confetti-explosion-container">
+          {Array.from({ length: 100 }).map((_, index) => {
+            const randomSize = 30 + Math.random() * 50; // 30-80px arası
+            const randomAngle = (Math.PI * 2 / 100) * index + (Math.random() - 0.5) * 0.3; // Her yöne dağıl (radyan)
+            const randomDistance = 200 + Math.random() * 300; // 200-500px mesafe
+            const randomDuration = 1.5 + Math.random() * 1.5; // 1.5-3 saniye
+            const randomDelay = Math.random() * 0.3; // 0-0.3 saniye gecikme
+            const randomRotation = Math.random() * 720; // 0-720 derece dönüş
+            const isHeart = Math.random() < 0.3; // %30 ihtimalle kalp
+            
+            // Trigonometrik hesaplamalar
+            const endX = Math.cos(randomAngle) * randomDistance;
+            const endY = Math.sin(randomAngle) * randomDistance;
+            const midX = Math.cos(randomAngle) * randomDistance * 0.5;
+            const midY = Math.sin(randomAngle) * randomDistance * 0.5;
+            
+            return (
+              isHeart ? (
+                <div
+                  key={`explosion-heart-${index}`}
+                  className="explosion-item explosion-heart"
+                  style={{
+                    fontSize: `${randomSize}px`,
+                    animationDelay: `${randomDelay}s`,
+                    animationDuration: `${randomDuration}s`,
+                    '--end-x': `${endX}px`,
+                    '--end-y': `${endY}px`,
+                    '--mid-x': `${midX}px`,
+                    '--mid-y': `${midY}px`,
+                    '--rotation': `${randomRotation}deg`
+                  }}
+                >
+                  ❤️
+                </div>
+              ) : (
+                <img
+                  key={`explosion-${index}`}
+                  src="/confetti-image.png"
+                  alt=""
+                  className="explosion-item"
+                  style={{
+                    width: `${randomSize}px`,
+                    height: `${randomSize}px`,
+                    animationDelay: `${randomDelay}s`,
+                    animationDuration: `${randomDuration}s`,
+                    '--end-x': `${endX}px`,
+                    '--end-y': `${endY}px`,
+                    '--mid-x': `${midX}px`,
+                    '--mid-y': `${midY}px`,
+                    '--rotation': `${randomRotation}deg`
+                  }}
+                />
+              )
+            )
+          })}
         </div>
       )}
       </main>
